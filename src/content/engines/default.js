@@ -34,6 +34,7 @@
  * @property {string} containerSelector CSS selector for elements to receive icons (insertion container).
  * @property {(el: Element, doc: Document) => string} getSearch Function that returns the search string to send to Servarr (may include prefixes like "imdb:" or "tmdb:"). Return an empty string to skip injecting for that element.
  * @property {(document: Document, url: string, settings: any) => (ServarrSiteType|string|null)} [resolveSiteType] Optional dynamic resolver. If provided, it overrides {@link DefaultEngineConfig.siteType}. Return null to skip the engine on this page.
+ * @property {(el: Element) => Element|null} [getInsertElOverride] Optional function to return a different element to insert into (instead of the matched container element).
  * @property {'prepend'|'append'|'before'|'after'} [insertWhere='prepend'] Where to place the icon relative to each container element.
  * @property {string} [wrapLinkWithContainer] Optional HTML string used to wrap the generated <a> link (helps with tricky layouts).
  * @property {string} [iconStyle='width:25px; margin:-8px 10px 0 0;'] Inline CSS applied to the <svg> element that displays the icon.
@@ -144,6 +145,7 @@
         var urlIncludes = cfg.urlIncludes || []; // use url matches if no matchOverride is provided
         var containerSelector = cfg.containerSelector || '';
         var getSearch = cfg.getSearch || function(){ return ''; };
+        var getInsertElOverride = cfg.getInsertElOverride || null;
         /** @type {'prepend'|'append'|'before'|'after'} */
         var insertWhere = cfg.insertWhere || 'prepend';
         var wrapHTML = cfg.wrapLinkWithContainer || null;
@@ -226,7 +228,12 @@
                     insert: function (args) {
                         log(['Engine.insert', { id, args }]);
 
-                        var el = args.el, link = args.link, site = args.site, styles = args.styles;
+                        var insertEl = (getInsertElOverride ? getInsertElOverride(args.el) : args.el);
+
+                        var el = insertEl, 
+                            link = args.link, 
+                            site = args.site, 
+                            styles = args.styles;
 
                         if (el.querySelector(`[data-servarr-ext-${site.id}-completed="true"]`)) return;
 

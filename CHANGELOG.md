@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 3.0.1
+
+### Fixed
+
+- Fix trakt integration ([#296](https://github.com/trossr32/sonarr-radarr-lidarr-autosearch-browser-extension/issues/296))
+
 ## 3.0.0
 
 ### Changed

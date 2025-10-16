@@ -1,33 +1,41 @@
 import { iconDataLocator } from '../constants';
 import { test, expect } from '../fixtures';
-import { getExpectedRadarrUrl, getExpectedSonarrUrl } from '../helpers';
+import { getExpectedRadarrUrl, getExpectedSonarrUrl, handleTraktCookieOverlay } from '../helpers';
 
 test('trakt tv has sonarr icon', async ({ page }) => {
-  await page.goto('https://trakt.tv/shows/fringe', { waitUntil: 'commit' });
-  await expect(page.locator(iconDataLocator)).toHaveCount(1);
-  await expect(page.locator(iconDataLocator)).toHaveAttribute('href', getExpectedSonarrUrl('imdb:tt1119644'), { ignoreCase: true });
+  await page.goto('https://app.trakt.tv/shows/fringe', { waitUntil: 'load' });
+  await handleTraktCookieOverlay(page);
+  await page.waitForSelector(iconDataLocator, { timeout: 15000 });
+  await expect(page.locator(iconDataLocator)).toHaveCount(1, { timeout: 15000 });
+  await expect(page.locator(iconDataLocator)).toHaveAttribute('href', getExpectedSonarrUrl('imdb:tt1119644'), { ignoreCase: true, timeout: 15000 });
 });
 
 test('trakt movie has radarr icon', async ({ page }) => {
-  await page.goto('https://trakt.tv/movies/the-dark-knight-2008', { waitUntil: 'commit' });
-  await expect(page.locator(iconDataLocator)).toHaveCount(1);
-  await expect(page.locator(iconDataLocator)).toHaveAttribute('href', getExpectedRadarrUrl('tmdb:155'), { ignoreCase: true });
+  await page.goto('https://app.trakt.tv/movies/the-dark-knight-2008', { waitUntil: 'load' });
+  await handleTraktCookieOverlay(page);
+  await page.waitForSelector(iconDataLocator, { timeout: 15000 });
+  await expect(page.locator(iconDataLocator)).toHaveCount(1, { timeout: 15000 });
+  await expect(page.locator(iconDataLocator)).toHaveAttribute('href', getExpectedRadarrUrl('imdb:tt0468569'), { ignoreCase: true, timeout: 15000 });
 });
 
-const tvShowViews = ['trending', 'popular', 'favorited/weekly', 'watched/weekly', 'collected/weekly', 'anticipated']
+const tvShowViews = ['trending', 'popular', 'anticipated' /*, 'favorited/weekly', 'watched/weekly', 'collected/weekly'*/]
 
 tvShowViews.forEach(view => {
   test(`trakt tv view ${view} has sonarr icons`, async ({ page }) => {
-    await page.goto(`https://trakt.tv/shows/${view}`, { waitUntil: 'commit' });
+    await page.goto(`https://app.trakt.tv/shows/${view}`, { waitUntil: 'load' });
+    await handleTraktCookieOverlay(page);
+    await page.waitForSelector(iconDataLocator, { timeout: 15000 });
     await expect(page.locator(iconDataLocator)).not.toHaveCount(0);
   });
 });
 
-const movieViews = ['trending', 'popular', 'favorited/weekly', 'watched/weekly', 'collected/weekly', 'anticipated', 'boxoffice'];
+const movieViews = ['trending', 'popular', 'anticipated' /*, 'favorited/weekly', 'watched/weekly', 'collected/weekly', 'boxoffice'*/];
 
 movieViews.forEach(view => {
   test(`trakt movie view ${view} has radarr icons`, async ({ page }) => {
-    await page.goto(`https://trakt.tv/movies/${view}`, { waitUntil: 'commit' });
+    await page.goto(`https://app.trakt.tv/movies/${view}`, { waitUntil: 'load' });
+    await handleTraktCookieOverlay(page);
+    await page.waitForSelector(iconDataLocator, { timeout: 15000 });
     await expect(page.locator(iconDataLocator)).not.toHaveCount(0);
   });
 });

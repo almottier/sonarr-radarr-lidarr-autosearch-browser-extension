@@ -6,17 +6,10 @@
     var pick = window.__servarrEngines.helpers.pickSiteIdFromDocument;
 
     function imdbId(doc) {
-        var a = doc.querySelector('.external > li > a#external-link-imdb');
+        var a = doc.querySelector('a[href^="https://www.imdb.com/title/tt"]');
         var href = (a && a.href) || '';
         var m = href.match(/(tt\d{5,10})/i);
         return m ? (`imdb:${m[1]}`) : '';
-    }
-    
-    function tmdbId(doc) {
-        var a = doc.querySelector('.external > li > a#external-link-tmdb');
-        var href = (a && a.href) || '';
-        var m = href.match(/\/(\d{2,10})/i);
-        return m ? (`tmdb:${m[1]}`) : '';
     }
 
     // Shows detail (TV → Sonarr)
@@ -25,11 +18,11 @@
         key: 'trakt-shows-detail',
         urlIncludes: ['trakt.tv/shows/'],
         deferMs: 3000,
-        containerSelector: '.container h1',
+        containerSelector: 'h3',
         insertWhere: 'prepend',
-        iconStyle: 'width: 25px; margin: -8px 10px 0 0;',
+        iconStyle: 'width: 36px; margin-right: 10px;',
         resolveSiteType: function (doc) {
-            return pick(doc, 'meta[property="og:type"]', 'content', [
+            return pick(doc, 'meta[property="og:type"][content^="video"]', 'content', [
                 { siteId: 'sonarr', pattern: /video\.tv_show/i }
             ]);
         },
@@ -42,15 +35,15 @@
         key: 'trakt-movies-detail',
         urlIncludes: ['trakt.tv/movies/'],
         deferMs: 3000,
-        containerSelector: '.container h1',
+        containerSelector: 'h3',
         insertWhere: 'prepend',
-        iconStyle: 'width: 25px; margin: -8px 10px 0 0;',
+        iconStyle: 'width: 36px; margin-right: 10px;',
         resolveSiteType: function (doc) {
-            return pick(doc, 'meta[property="og:type"]', 'content', [
+            return pick(doc, 'meta[property="og:type"][content^="video"]', 'content', [
                 { siteId: 'radarr', pattern: /video\.movie/i }
             ]);
         },
-        getSearch: function (_el, doc) { return tmdbId(doc); }
+        getSearch: function (_el, doc) { return imdbId(doc); }
     });
 
     // Shows group listings (default Sonarr)
@@ -65,11 +58,23 @@
             'trakt.tv/shows/collected/weekly',
             'trakt.tv/shows/anticipated'
         ],
-        containerSelector: '.titles-link > h3',
-        insertWhere: 'append',
-        iconStyle: 'width: 25px; margin: 0 0 -4px 10px;',
+        deferMs: 2000,
+        containerSelector: '.trakt-card-content',
+        insertWhere: 'prepend',
+        iconStyle: 'width: 20px; margin: 0;',
         siteType: 'sonarr',
-        getSearch: function (_el,doc) { return (_el && (_el.textContent || '').trim()) || ''; }
+        getInsertElOverride: function(el) { return el.querySelector('.trakt-card-footer') || el; },
+        getSearch: function (_el, doc) {
+            const a = _el.querySelector('a');
+            const raw = a ? (a.getAttribute('href') || a.href || '').trim() : '';
+            if (!raw) return '';
+
+            const path = raw.startsWith('http') ? new URL(raw, location.href).pathname : raw;
+
+            // Match: /shows/<slug>[optional trailing /]
+            const m = path.match(/^\/shows\/([a-z0-9\-_]+)(?:\/|$)/i);
+            return m ? m[1].replace(/[-_]/g, ' ').trim() : '';
+        }
     });
 
     // Movies group listings (default Radarr)
@@ -85,11 +90,23 @@
             'trakt.tv/movies/anticipated',
             'trakt.tv/movies/boxoffice'
         ],
-        containerSelector: '.titles-link > h3',
-        insertWhere: 'append',
-        iconStyle: 'width: 23px; margin: 0 0 2px 10px;',
+        deferMs: 2000,
+        containerSelector: '.trakt-card-content',
+        insertWhere: 'prepend',
+        iconStyle: 'width: 20px; margin: 0;',
         siteType: 'radarr',
-        getSearch: function (_el,doc) { return (_el && (_el.textContent || '').trim()) || ''; }
+        getInsertElOverride: function(el) { return el.querySelector('.trakt-card-footer') || el; },
+        getSearch: function (_el, doc) {
+            const a = _el.querySelector('a');
+            const raw = a ? (a.getAttribute('href') || a.href || '').trim() : '';
+            if (!raw) return '';
+
+            const path = raw.startsWith('http') ? new URL(raw, location.href).pathname : raw;
+
+            // Match: /movies/<slug>[-YYYY][optional trailing /]
+            const m = path.match(/^\/movies\/([a-z0-9\-_]+?)(?:-\d{4})?(?:\/|$)/i);
+            return m ? m[1].replace(/[-_]/g, ' ').trim() : '';
+        }
     });
 
     window.__servarrEngines.list.push(ShowsDetail, MoviesDetail, ShowsGroup, MoviesGroup);

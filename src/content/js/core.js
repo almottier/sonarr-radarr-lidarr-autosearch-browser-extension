@@ -371,7 +371,7 @@ let sessionId,
             contextMenu: browser.contextMenus != null,
             debug: false,
             searchInputWaitForMs: 300,
-            searchInputMaxAttempts: 20,
+            searchInputMaxAttempts: 100,
             customIconPosition: false
         }
     },
